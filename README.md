@@ -6,7 +6,7 @@ Imagine **28 irrigation control centers** (Valmont servers) that need to send im
 
 ---
 
-## 🏗️ The Big Picture
+## 🏗️ The Big Picture: Complete Request Flow
 
 ```mermaid
 graph TB
@@ -20,15 +20,35 @@ graph TB
     
     subgraph "🧠 Central System"
         TS[🖥️ Toshka Brain]
-        PTD[📊 Data Storage]
+        PTD[📊 Pivot Tags Data]
     end
     
-    V1 -.->|📡 Send Data| TS
-    V2 -.->|📡 Send Data| TS
-    V3 -.->|📡 Send Data| TS
-    V28 -.->|📡 Send Data| TS
+    %% Step 1: Authentication Requests
+    V1 -.->|1️⃣ 🔐 Ask for Token<br/>GET /generateToken| TS
+    V2 -.->|1️⃣ 🔐 Ask for Token<br/>GET /generateToken| TS
+    V3 -.->|1️⃣ 🔐 Ask for Token<br/>GET /generateToken| TS
+    V28 -.->|1️⃣ 🔐 Ask for Token<br/>GET /generateToken| TS
     
-    TS -->|💾 Saves Info| PTD
+    %% Step 1: Token Responses
+    TS -.->|🎟️ Token Response| V1
+    TS -.->|🎟️ Token Response| V2
+    TS -.->|🎟️ Token Response| V3
+    TS -.->|🎟️ Token Response| V28
+    
+    %% Step 2: Data Sending Requests
+    V1 -->|2️⃣ 📦 Send 20 Pivot Data<br/>POST /sendPivotStatus| TS
+    V2 -->|2️⃣ 📦 Send 20 Pivot Data<br/>POST /sendPivotStatus| TS
+    V3 -->|2️⃣ 📦 Send 20 Pivot Data<br/>POST /sendPivotStatus| TS
+    V28 -->|2️⃣ 📦 Send 20 Pivot Data<br/>POST /sendPivotStatus| TS
+    
+    %% Step 3: Data Processing & Storage
+    TS -->|3️⃣ 🔍 Validate & Store<br/>Update Pivot Data| PTD
+    
+    %% Success Responses
+    TS -.->|✅ Success Response| V1
+    TS -.->|✅ Success Response| V2
+    TS -.->|✅ Success Response| V3
+    TS -.->|✅ Success Response| V28
     
     style TS fill:#4CAF50,color:#fff
     style PTD fill:#2196F3,color:#fff
@@ -37,6 +57,11 @@ graph TB
     style V3 fill:#FF9800,color:#fff
     style V28 fill:#FF9800,color:#fff
 ```
+
+### 🔄 Flow Summary:
+- **1️⃣ Authentication:** All 28 centers ask for access tokens
+- **2️⃣ Data Transfer:** Each center sends 20 pivot machine data points  
+- **3️⃣ Processing:** Toshka validates and stores all data safely
 
 ---
 
