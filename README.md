@@ -1,114 +1,101 @@
+
 # 🌐 API Workflow: Valmont ↔ Toshka ↔ Pivot Tags
 
-This document explains how **Valmont servers** send **pivot data** to the **Toshka server**, which then updates the final records. It's made simple for both technical and non-technical users.
+> A clear, human-friendly overview of how Valmont servers communicate with Toshka to update pivot data.
 
 ---
 
-## 🧹 Step 1: Get Token (Authentication)
+## 🧩 Step 1: Get Token (Authentication)
 
-**🔸 Who:** Valmont 28 Servers
-**🔸 What:** Request a token from Toshka to authenticate
+**Who:** Valmont 28 Servers  
+**What:** Request a token to access Toshka Server  
+**How:** Send a GET request with Basic Auth credentials
 
-### ➔ Request
-
-**GET** `/generateToken`
-**Headers:**
-
-```
-Authorization: Basic (username:password)
+```http
+GET /generateToken
+Authorization: Basic <base64(username:password)>
 ```
 
-### ➔ Toshka Response
-
-✅ Returns a **token** if credentials are valid
+✅ If valid, Toshka returns a **token** for secure access.
 
 ---
 
 ## 🚚 Step 2: Send Pivot Data
 
-**🔸 Who:** Valmont
-**🔸 What:** Send pivot status updates to Toshka
-**🔸 How:** Make a **POST** request to `sendPivotStatus`
+**Who:** Valmont  
+**What:** POST 20 pivot items to Toshka  
+**How:** Send a POST request with token, username, and password
 
-### ➔ Request
-
-**POST** `/sendPivotStatus`
-**Headers:**
-
-```
+```http
+POST /sendPivotStatus
 Authorization: Bearer <token>
-Username: <username>
-Password: <password>
+Username: valmontUser
+Password: valmontPass
+Content-Type: application/json
 ```
-
-**Body (JSON):**
 
 ```json
 [
   { "pivotName": "Pivot1", "status": "On", "pressure": 32.1 },
   { "pivotName": "Pivot2", "status": "Off", "pressure": 30.5 },
   ...
-  20 pivot items
+  20 total items
 ]
 ```
 
 ---
 
-## 🧠 Step 3: Validation & Processing (Toshka Side)
+## 🧠 Step 3: Toshka Validates the Request
 
-Toshka performs the following:
+Toshka checks:
 
-✅ Token validation
-✅ Header check (username & password)
-✅ JSON body must have **exactly 20 items**
-✅ Each item must contain required fields:
+- ✅ Token is valid
+- ✅ Username and password in headers
+- ✅ Exactly 20 items in JSON
+- ✅ Each item has:
+  - `pivotName`
+  - `status`
+  - Correct data types (e.g., strings, numbers)
 
-* `pivotName`
-* `status`
-* Other key values (like `pressure`)
-  ✅ Type check (e.g. string, number, etc.)
+If anything is missing or incorrect → ❌ request is rejected.
 
 ---
 
-## 📅 Step 4: Data Update
+## 🛠️ Step 4: Data Update
 
-If all checks pass, Toshka:
+Once validated, Toshka updates the Pivot Tags:
 
-* Updates each pivot entry in the system
-* Stores latest data in the pivot tags database
-
-Example update:
-
-```
-Pivot Data Storage
- ├── Pivot1 → status = On, pressure = 32.1
- ├── Pivot2 → status = Off, pressure = 30.5
- └── ... etc.
+```text
+Pivot Tags:
+├── Pivot1 → status: On, pressure: 32.1
+├── Pivot2 → status: Off, pressure: 30.5
+└── ... All 20 updated
 ```
 
 ---
 
-## 🔁 Visual Flow Summary
+## 🔁 Visual Flow Diagram
 
 ```mermaid
 graph TD
-  A[Valmont 28 Servers] -->|1. GET /generateToken| B[Toshka Server]
-  B -->|Token Response| A
-  A -->|2. POST /sendPivotStatus (20 items)| B
-  B -->|3. Validate JSON & Headers| B
-  B -->|4. Update Data| C[Pivot Tags Storage]
+  A[Valmont Servers] -->|GET /generateToken| B[Toshka Server]
+  B -->|Returns Token| A
+  A -->|POST /sendPivotStatus (20 items)| B
+  B -->|Validate JSON & Auth| B
+  B -->|Update Tags| C[Pivot Tag Storage]
 ```
 
 ---
 
-## ✅ Key Notes
+## 📌 Key Points to Remember
 
-* Use HTTPS for all requests
-* Token expires after a set time (e.g. 30 min)
-* Ensure pivot JSON includes all 20 records
-* Toshka will reject requests missing `pivotName` or with wrong data types
+- Use HTTPS for all requests.
+- Token expires (e.g., after 30 minutes).
+- Each request **must** contain 20 pivot items.
+- `pivotName` is required for every item.
+- Toshka performs both format and content validation.
 
 ---
 
-📄 **Last Updated:** June 2025
-🛠️ **Maintainer:** API Integration Team – Valmont/Toshka Systems
+📅 **Last Updated:** June 2025  
+🔧 **Maintained by:** Valmont & Toshka API Integration Team
